@@ -103,7 +103,7 @@ class Registro : AppCompatActivity() {
 
     private fun subirImagen(uri: Uri) {
         val userId = auth.currentUser
-        val imageRef = storageRef.child("usuarios/" + userId!!.uid + "/profile_image.jpg")
+        val imageRef = storageRef.child("usuarios/" + userId!!.uid + "/imageUrl")
 
         imageRef.putFile(uri)
             .addOnSuccessListener {
