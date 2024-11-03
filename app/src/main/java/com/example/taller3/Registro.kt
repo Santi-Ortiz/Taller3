@@ -42,11 +42,9 @@ class Registro : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        // Desactivar botones inicialmente
         binding.btnRegister.isEnabled = false
         binding.btnUploadImage.isEnabled = false
 
-        // Verificar permisos al inicio
         checkPermissions()
 
         binding.btnRegister.setOnClickListener {
@@ -59,7 +57,6 @@ class Registro : AppCompatActivity() {
 
     private fun checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13 y superior
             when {
                 ContextCompat.checkSelfPermission(
                     this,
@@ -78,7 +75,6 @@ class Registro : AppCompatActivity() {
                 }
             }
         } else {
-            // Android 12 y anterior
             when {
                 ContextCompat.checkSelfPermission(
                     this,
