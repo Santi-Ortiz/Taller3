@@ -40,7 +40,6 @@ class Registro : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_registro)
-
         binding = ActivityRegistroBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -78,7 +77,6 @@ class Registro : AppCompatActivity() {
         user.identificacion = binding.idRegister.text.toString().toInt()
         user.latitud = 0.0
         user.longitud = 0.0
-        user.imageUrl = ""
 
         val myRef = database.getReference(PATH_USERS+auth.currentUser!!.uid)
         myRef.setValue(user)
@@ -104,7 +102,7 @@ class Registro : AppCompatActivity() {
 
     private fun subirImagen(uri: Uri) {
         val userId = auth.currentUser
-        val imageRef = storageRef.child("images/profile/$userId/image.jpg")
+        val imageRef = storageRef.child("usuarios/" +userId!!.uid +"/imageUrl"+"image.jpg")
 
         imageRef.putFile(uri)
             .addOnSuccessListener {
