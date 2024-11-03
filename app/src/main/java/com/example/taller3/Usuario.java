@@ -9,11 +9,12 @@ public class Usuario {
     public double latitud;
     public double longitud;
     public String imageUrl;
+    public Boolean disponible;
 
     public Usuario() {}
 
     public Usuario(String nombre, String apellido, String email, String password, int identificacion,
-                double latitud, double longitud, String imageUrl) {
+                double latitud, double longitud, String imageUrl, Boolean disponible) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;
@@ -22,6 +23,7 @@ public class Usuario {
         this.latitud = latitud;
         this.longitud = longitud;
         this.imageUrl = imageUrl;
+        this.disponible = disponible;
     }
 
     public String getNombre() {
@@ -86,5 +88,13 @@ public class Usuario {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public Boolean getDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(Boolean disponible) {
+        this.disponible = disponible;
     }
 }

@@ -147,6 +147,7 @@ class Registro : AppCompatActivity() {
         user.imageUrl = imageUri?.toString() ?: ""
         user.latitud = 0.0
         user.longitud = 0.0
+        user.disponible = true
 
         val myRef = database.getReference(PATH_USERS+auth.currentUser!!.uid)
         myRef.setValue(user)
