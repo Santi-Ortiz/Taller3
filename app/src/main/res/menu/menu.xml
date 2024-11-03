@@ -18,4 +18,9 @@
         android:title="Desconectado"
         android:fontFamily="@font/poppins_bold"/>
 
+    <item
+        android:id="@+id/menuOtrosUsuarios"
+        android:title="Ver Usuarios"
+        android:fontFamily="@font/poppins_bold"/>
+
 </menu>

@@ -54,6 +54,10 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage.ktx)
+    implementation(libs.play.services.maps)
+    implementation(libs.gms.play.services.maps)
+    implementation(libs.gms.play.services.location)
+    implementation (libs.gson)
 
 
     testImplementation(libs.junit)
