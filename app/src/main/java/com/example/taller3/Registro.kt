@@ -75,6 +75,7 @@ class Registro : AppCompatActivity() {
         user.email = binding.emailRegister.text.toString()
         user.password = binding.passwordRegister.text.toString()
         user.identificacion = binding.idRegister.text.toString().toInt()
+        user.imageUrl = ""
         user.latitud = 0.0
         user.longitud = 0.0
 
@@ -102,7 +103,7 @@ class Registro : AppCompatActivity() {
 
     private fun subirImagen(uri: Uri) {
         val userId = auth.currentUser
-        val imageRef = storageRef.child("usuarios/" +userId!!.uid +"/imageUrl"+"image.jpg")
+        val imageRef = storageRef.child("usuarios/" + userId!!.uid + "/profile_image.jpg")
 
         imageRef.putFile(uri)
             .addOnSuccessListener {
@@ -119,8 +120,22 @@ class Registro : AppCompatActivity() {
     }
 
     private fun guardarUrlImagen(url: String) {
-        val myRef = Firebase.database.getReference(PATH_USERS + auth.currentUser!!.uid)
-        myRef.child("imageUrl").setValue(url)
+        val userId = auth.currentUser
+        if (userId != null) {
+            val myRef = Firebase.database.getReference(PATH_USERS).child(userId.uid)
+
+            myRef.child("imageUrl").setValue(url)
+                .addOnSuccessListener {
+                    Log.i(TAG, "URL de la imagen guardada correctamente en Realtime Database")
+                    Toast.makeText(this, "URL de la imagen guardada en la base de datos", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { exception ->
+                    Log.e(TAG, "Error al guardar la URL de la imagen en Realtime Database: ${exception.message}")
+                    Toast.makeText(this, "Error al guardar la URL de la imagen", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            Log.e(TAG, "El usuario no está autenticado. No se puede guardar la URL de la imagen.")
+        }
     }
 
     private fun registrarUsuario(correo: String, contrasena: String){
@@ -132,7 +147,7 @@ class Registro : AppCompatActivity() {
                     if (user != null) {
                         val upcrb = UserProfileChangeRequest.Builder()
                         upcrb.setDisplayName(binding.nombreRegister.text.toString() + " " + binding.apellidoRegister.text.toString())
-                        //upcrb.setPhotoUri(Uri.parse("path/to/pic"))
+                        upcrb.setPhotoUri(Uri.parse("usuarios/" + user.uid + "/imageUrl/image.jpg"))
                         user.updateProfile(upcrb.build())
                         escribirUsuario()
                         updateUI(user)
