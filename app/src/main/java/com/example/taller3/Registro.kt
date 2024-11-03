@@ -30,8 +30,9 @@ class Registro : AppCompatActivity() {
         setContentView(binding.root)
 
         auth = Firebase.auth
-        iniciarSesion(binding.emailRegister.text.toString(), binding.passwordRegister.text.toString())
-
+        binding.btnRegister.setOnClickListener {
+            registrarUsuario(binding.emailRegister.text.toString(), binding.passwordRegister.text.toString())
+        }
     }
 
     private fun updateUI(currentUser: FirebaseUser?){
@@ -46,7 +47,7 @@ class Registro : AppCompatActivity() {
         }
     }
 
-    private fun iniciarSesion(correo: String, contrasena: String){
+    private fun registrarUsuario(correo: String, contrasena: String){
         auth.createUserWithEmailAndPassword(correo, contrasena)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
