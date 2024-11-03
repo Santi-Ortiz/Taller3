@@ -5,6 +5,7 @@
     android:padding="24dp">
 
     <LinearLayout
+        android:layout_marginTop="90dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -12,6 +13,7 @@
 
         <TextView
             android:layout_width="wrap_content"
+            android:fontFamily="@font/poppins_bold"
             android:layout_height="wrap_content"
             android:text="Registro de Usuario"
             android:textSize="24sp"
@@ -20,6 +22,7 @@
 
         <EditText
             android:id="@+id/nombreRegister"
+            android:fontFamily="@font/poppins_bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Nombre"
@@ -27,6 +30,7 @@
 
         <EditText
             android:id="@+id/apellidoRegister"
+            android:fontFamily="@font/poppins_bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Apellido"
@@ -34,6 +38,7 @@
 
         <EditText
             android:id="@+id/emailRegister"
+            android:fontFamily="@font/poppins_bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Correo Electrónico"
@@ -42,6 +47,7 @@
 
         <EditText
             android:id="@+id/passwordRegister"
+            android:fontFamily="@font/poppins_bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Contraseña"
@@ -50,6 +56,7 @@
 
         <EditText
             android:id="@+id/idRegister"
+            android:fontFamily="@font/poppins_bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Número de Identificación"
@@ -58,8 +65,8 @@
 
         <ImageView
             android:id="@+id/imageContact"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
             android:layout_gravity="center"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_person_placeholder"
@@ -67,14 +74,18 @@
 
         <Button
             android:id="@+id/btnUploadImage"
+            android:fontFamily="@font/poppins_bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:backgroundTint="#ED301C"
             android:text="Cargar Imagen" />
 
         <Button
             android:id="@+id/btnRegister"
+            android:fontFamily="@font/poppins_bold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:backgroundTint="#ED9B1C"
             android:text="Registrar"
             android:layout_marginTop="16dp" />
 

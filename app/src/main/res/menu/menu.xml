@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <item
         android:id="@+id/menuCerrarSesion"
-        android:title="@string/cerrar_sesi_n"
+        android:title="Cerrar Sesión"
+        android:fontFamily="@font/poppins_bold"
         app:showAsAction="ifRoom"/>
+
     <item
         android:id="@+id/menuDisponible"
-        android:title="@string/disponible"/>
+        android:title="Disponible"
+        android:fontFamily="@font/poppins_bold"/>
+
     <item
         android:id="@+id/menuDesconectado"
-        android:title="@string/desconectado"/>
+        android:title="Desconectado"
+        android:fontFamily="@font/poppins_bold"/>
 
 </menu>

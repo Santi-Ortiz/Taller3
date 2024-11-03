@@ -1,49 +1,53 @@
 package com.example.taller3
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.content.ContextCompat
 import com.example.taller3.databinding.ActivityRegistroBinding
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.auth
 import com.google.firebase.database.database
-import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.storage
-import java.io.File
 
 class Registro : AppCompatActivity() {
 
-    private lateinit var auth: FirebaseAuth;
+    private lateinit var auth: FirebaseAuth
     private lateinit var binding: ActivityRegistroBinding
     private val storageRef = Firebase.storage.reference
+    private var imageUri: Uri? = null
 
     companion object {
         const val PATH_USERS = "usuarios/"
         const val REQUEST_IMAGE_PICK = 1001
+        const val PERMISSION_REQUEST_CODE = 123
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_registro)
         binding = ActivityRegistroBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         auth = Firebase.auth
+
+        // Desactivar botones inicialmente
+        binding.btnRegister.isEnabled = false
+        binding.btnUploadImage.isEnabled = false
+
+        // Verificar permisos al inicio
+        checkPermissions()
 
         binding.btnRegister.setOnClickListener {
             registrarUsuario(binding.emailRegister.text.toString(), binding.passwordRegister.text.toString())
@@ -53,9 +57,78 @@ class Registro : AppCompatActivity() {
         }
     }
 
+    private fun checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13 y superior
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_IMAGES
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    enableButtons()
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.READ_MEDIA_IMAGES) -> {
+                    showPermissionDeniedMessage()
+                }
+                else -> {
+                    requestPermissions(
+                        arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
+                        PERMISSION_REQUEST_CODE
+                    )
+                }
+            }
+        } else {
+            // Android 12 y anterior
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    enableButtons()
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) -> {
+                    showPermissionDeniedMessage()
+                }
+                else -> {
+                    requestPermissions(
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                        PERMISSION_REQUEST_CODE
+                    )
+                }
+            }
+        }
+    }
+
+    private fun enableButtons() {
+        binding.btnRegister.isEnabled = true
+        binding.btnUploadImage.isEnabled = true
+    }
+
+    private fun showPermissionDeniedMessage() {
+        Toast.makeText(this, "¡No podrás registrarte!", Toast.LENGTH_LONG).show()
+        binding.btnRegister.isEnabled = false
+        binding.btnUploadImage.isEnabled = false
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    enableButtons()
+                } else {
+                    showPermissionDeniedMessage()
+                }
+            }
+        }
+    }
+
     @SuppressLint("SetTextI18n")
     private fun updateUI(currentUser: FirebaseUser?){
-
         if (currentUser != null) {
             val intent = Intent(this, Principal::class.java)
             intent.putExtra("user", currentUser.email)
@@ -75,7 +148,7 @@ class Registro : AppCompatActivity() {
         user.email = binding.emailRegister.text.toString()
         user.password = binding.passwordRegister.text.toString()
         user.identificacion = binding.idRegister.text.toString().toInt()
-        user.imageUrl = ""
+        user.imageUrl = imageUri?.toString() ?: ""
         user.latitud = 0.0
         user.longitud = 0.0
 
@@ -92,29 +165,35 @@ class Registro : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_IMAGE_PICK && data != null) {
-            val imageUri = data.data
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK && data != null) {
+            imageUri = data.data
             if (imageUri != null) {
                 binding.imageContact.setImageURI(imageUri)
-                subirImagen(imageUri)
+                subirImagen(imageUri!!)
             }
         }
     }
 
     private fun subirImagen(uri: Uri) {
         val userId = auth.currentUser
-        val imageRef = storageRef.child("usuarios/" + userId!!.uid + "/imageUrl")
+        if (userId == null) {
+            Toast.makeText(this, "Error: Usuario no autenticado", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val imageRef = storageRef.child("usuarios/${userId.uid}/profile_image.jpg")
 
         imageRef.putFile(uri)
-            .addOnSuccessListener {
+            .addOnSuccessListener { taskSnapshot ->
                 imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
                     Log.i(TAG, "URL de la imagen: $downloadUri")
                     Toast.makeText(this, "Imagen subida correctamente", Toast.LENGTH_SHORT).show()
                     guardarUrlImagen(downloadUri.toString())
+                    imageUri = downloadUri
                 }
             }
-            .addOnFailureListener {
-                Log.e(TAG, "Error al subir la imagen: ${it.message}")
+            .addOnFailureListener { exception ->
+                Log.e(TAG, "Error al subir la imagen: ${exception.message}")
                 Toast.makeText(this, "Error al subir la imagen", Toast.LENGTH_SHORT).show()
             }
     }
@@ -159,5 +238,4 @@ class Registro : AppCompatActivity() {
                 }
             }
     }
-
 }
