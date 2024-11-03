@@ -32,7 +32,7 @@ class Principal : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
         auth = FirebaseAuth.getInstance()
-        loadUsers()
+        //loadUsers()
     }
 
     private fun loadUsers() {
@@ -77,6 +77,7 @@ class Principal : AppCompatActivity() {
                     val myRef = database.getReference(PATH_USERS).child(it.uid)
                     myRef.child("disponible").setValue(true)
                 }
+                Toast.makeText(this, "Usuario disponible", Toast.LENGTH_SHORT).show()
                 true
             }
             R.id.menuDesconectado -> {
@@ -85,6 +86,7 @@ class Principal : AppCompatActivity() {
                     val myRef = database.getReference(PATH_USERS).child(it.uid)
                     myRef.child("disponible").setValue(false)
                 }
+                Toast.makeText(this, "Usuario desconectado", Toast.LENGTH_SHORT).show()
                 true
             }
             else -> super.onOptionsItemSelected(item)
