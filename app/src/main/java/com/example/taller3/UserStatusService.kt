@@ -26,9 +26,6 @@ class UserStatusService : Service() {
         database.addChildEventListener(object : ChildEventListener {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                 val usuario = snapshot.getValue(Usuario::class.java)
-                if (usuario != null && usuario.disponible == true && usuario.email != userEmail) {
-                    Toast.makeText(applicationContext, "${usuario.nombre} está conectado.", Toast.LENGTH_SHORT).show()
-                }
             }
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {

@@ -47,6 +47,7 @@ class VerUsers : AppCompatActivity() {
 
         // Iniciar el servicio de estado de usuario
         val intent = Intent(this, UserStatusService::class.java)
+        startService(intent)
 
         // Cargar la lista de usuarios desde Firebase
         cargarUsuariosDeFirebase()

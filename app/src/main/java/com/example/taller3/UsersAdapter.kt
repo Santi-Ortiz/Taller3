@@ -1,10 +1,6 @@
 package com.example.taller3
 
-import android.content.ContentResolver
 import android.content.Context
-import android.graphics.Bitmap
-import android.net.Uri
-import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +10,9 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
-import java.io.IOException
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.RequestOptions
+import com.google.firebase.storage.FirebaseStorage
 
 class UsersAdapter(
     private val context: Context,
@@ -22,8 +20,15 @@ class UsersAdapter(
     private val onVerPosicionClicked: (Usuario) -> Unit
 ) : ArrayAdapter<Usuario>(context, R.layout.layout_users, usuarios) {
 
+    private val storage = FirebaseStorage.getInstance()
+    private val requestOptions = RequestOptions()
+        .diskCacheStrategy(DiskCacheStrategy.ALL)
+        .placeholder(R.drawable.fotoperfil)
+        .error(R.drawable.fotoperfil)
+
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.layout_users, parent, false)
+        val view = convertView ?: LayoutInflater.from(context)
+            .inflate(R.layout.layout_users, parent, false)
 
         val usuario = usuarios[position]
 
@@ -31,25 +36,52 @@ class UsersAdapter(
         val nombreTextView = view.findViewById<TextView>(R.id.nombreTextView)
         val verPosicionButton = view.findViewById<Button>(R.id.btnVerPosicion)
 
-        Log.d("UsersAdapter", "Cargando imagen desde URL: ${usuario.imageUrl}")
+        // Configurar el nombre del usuario
+        nombreTextView.text = "${usuario.nombre} ${usuario.apellido}"
 
-        // Concatenar nombre y apellido
-        nombreTextView.text = "${usuario.nombre} ${usuario.apellido}" // Concatenar nombre y apellido
-
-        if (!usuario.imageUrl.isNullOrEmpty()) {
-            Glide.with(context)
-                .load(usuario.imageUrl)
-                .placeholder(R.drawable.fotoperfil)
-                .into(imgContact)
-        } else {
-            imgContact.setImageResource(R.drawable.fotoperfil)
-        }
-
+        // Manejar la carga de la imagen
+        cargarImagenPerfil(usuario, imgContact)
 
         verPosicionButton.setOnClickListener {
             onVerPosicionClicked(usuario)
         }
 
         return view
+    }
+
+    private fun cargarImagenPerfil(usuario: Usuario, imageView: ImageView) {
+        val imageUrl = usuario.imageUrl
+
+        when {
+            // Si la URL es una referencia a Storage (comienza con "usuarios/")
+            imageUrl?.startsWith("usuarios/") == true -> {
+                storage.reference.child(imageUrl).downloadUrl
+                    .addOnSuccessListener { uri ->
+                        cargarImagenConGlide(uri.toString(), imageView)
+                        Log.d("UsersAdapter", "URL de Storage obtenida: $uri")
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("UsersAdapter", "Error al obtener URL de Storage: ${exception.message}")
+                        imageView.setImageResource(R.drawable.fotoperfil)
+                    }
+            }
+            // Si ya es una URL completa (comienza con http:// o https://)
+            imageUrl?.startsWith("http") == true -> {
+                cargarImagenConGlide(imageUrl, imageView)
+                Log.d("UsersAdapter", "Cargando URL directa: $imageUrl")
+            }
+            // Si no hay URL o es inválida
+            else -> {
+                Log.d("UsersAdapter", "No hay URL de imagen válida, usando imagen por defecto")
+                imageView.setImageResource(R.drawable.fotoperfil)
+            }
+        }
+    }
+
+    private fun cargarImagenConGlide(url: String, imageView: ImageView) {
+        Glide.with(context)
+            .load(url)
+            .apply(requestOptions)
+            .into(imageView)
     }
 }

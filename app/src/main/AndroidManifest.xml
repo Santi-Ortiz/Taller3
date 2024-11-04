@@ -24,6 +24,9 @@
         android:theme="@style/Theme.Taller3"
         tools:targetApi="31">
         <activity
+            android:name=".CargaImagen"
+            android:exported="false" />
+        <activity
             android:name=".MapaActivity"
             android:exported="false" />
 
