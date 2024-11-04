@@ -36,6 +36,16 @@ class UsersAdapter(
         // Concatenar nombre y apellido
         nombreTextView.text = "${usuario.nombre} ${usuario.apellido}" // Concatenar nombre y apellido
 
+        if (!usuario.imageUrl.isNullOrEmpty()) {
+            Glide.with(context)
+                .load(usuario.imageUrl)
+                .placeholder(R.drawable.fotoperfil)
+                .into(imgContact)
+        } else {
+            imgContact.setImageResource(R.drawable.fotoperfil)
+        }
+
+
         verPosicionButton.setOnClickListener {
             onVerPosicionClicked(usuario)
         }

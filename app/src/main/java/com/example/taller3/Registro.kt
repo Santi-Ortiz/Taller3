@@ -20,7 +20,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.auth
 import com.google.firebase.database.database
+import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
+import java.io.File
 
 class Registro : AppCompatActivity() {
 
@@ -145,12 +147,23 @@ class Registro : AppCompatActivity() {
         user.password = binding.passwordRegister.text.toString()
         user.identificacion = binding.idRegister.text.toString().toInt()
         user.imageUrl = imageUri?.toString() ?: ""
-        user.latitud = 0.0
-        user.longitud = 0.0
         user.disponible = true
 
         val myRef = database.getReference(PATH_USERS+auth.currentUser!!.uid)
         myRef.setValue(user)
+
+        val db = Firebase.firestore
+        db.collection("usuarios").document(auth.currentUser!!.uid)
+            .set(user)
+            .addOnSuccessListener {
+                Log.i(TAG, "Usuario guardado correctamente en Firestore")
+                Toast.makeText(this, "Usuario guardado en Firestore", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { exception ->
+                Log.e(TAG, "Error al guardar el usuario en Firestore: ${exception.message}")
+                Toast.makeText(this, "Error al guardar el usuario en Firestore", Toast.LENGTH_SHORT).show()
+            }
+
     }
 
     @SuppressLint("IntentReset")
@@ -172,41 +185,35 @@ class Registro : AppCompatActivity() {
     }
 
     private fun subirImagen(uri: Uri) {
-        val userId = auth.currentUser
-        if (userId == null) {
-            Toast.makeText(this, "Error: Usuario no autenticado", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val imageRef = storageRef.child("usuarios/${userId.uid}/profile_image.jpg")
+        val userId = auth.currentUser?.uid ?: return
+        val imageRef = storageRef.child("usuarios/$userId/imageUrl/image.jpg")
 
         imageRef.putFile(uri)
-            .addOnSuccessListener { taskSnapshot ->
+            .addOnSuccessListener {
                 imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                    Log.i(TAG, "URL de la imagen: $downloadUri")
-                    Toast.makeText(this, "Imagen subida correctamente", Toast.LENGTH_SHORT).show()
-                    guardarUrlImagen(downloadUri.toString())
-                    imageUri = downloadUri
+                    Log.i("FBApp", "URL de la imagen: $downloadUri")
+                    guardarUrlImagenFirestore(downloadUri.toString())
                 }
             }
             .addOnFailureListener { exception ->
-                Log.e(TAG, "Error al subir la imagen: ${exception.message}")
+                Log.e("FBApp", "Error al subir la imagen: ${exception.message}")
                 Toast.makeText(this, "Error al subir la imagen", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun guardarUrlImagen(url: String) {
+    private fun guardarUrlImagenFirestore(url: String) {
         val userId = auth.currentUser
         if (userId != null) {
-            val myRef = Firebase.database.getReference(PATH_USERS).child(userId.uid)
+            val db = Firebase.firestore
+            val userRef = db.collection("usuarios").document(userId.uid)
 
-            myRef.child("imageUrl").setValue(url)
+            userRef.update("imageUrl", url)
                 .addOnSuccessListener {
-                    Log.i(TAG, "URL de la imagen guardada correctamente en Realtime Database")
-                    Toast.makeText(this, "URL de la imagen guardada en la base de datos", Toast.LENGTH_SHORT).show()
+                    Log.i(TAG, "URL de la imagen guardada correctamente en Firestore")
+                    Toast.makeText(this, "URL de la imagen guardada en Firestore", Toast.LENGTH_SHORT).show()
                 }
                 .addOnFailureListener { exception ->
-                    Log.e(TAG, "Error al guardar la URL de la imagen en Realtime Database: ${exception.message}")
+                    Log.e(TAG, "Error al guardar la URL de la imagen en Firestore: ${exception.message}")
                     Toast.makeText(this, "Error al guardar la URL de la imagen", Toast.LENGTH_SHORT).show()
                 }
         } else {
@@ -226,6 +233,7 @@ class Registro : AppCompatActivity() {
                         upcrb.setPhotoUri(Uri.parse("usuarios/" + user.uid + "/imageUrl/image.jpg"))
                         user.updateProfile(upcrb.build())
                         escribirUsuario()
+                        guardarUrlImagenFirestore("usuarios/" + user.uid + "/imageUrl/image.jpg")
                         updateUI(user)
                     }
                 } else {

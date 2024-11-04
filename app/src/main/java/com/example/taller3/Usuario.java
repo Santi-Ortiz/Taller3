@@ -6,22 +6,18 @@ public class Usuario {
     public String email;
     public String password;
     public int identificacion;
-    public double latitud;
-    public double longitud;
     public String imageUrl;
     public Boolean disponible;
 
     public Usuario() {}
 
     public Usuario(String nombre, String apellido, String email, String password, int identificacion,
-                double latitud, double longitud, String imageUrl, Boolean disponible) {
+                String imageUrl, Boolean disponible) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;
         this.password = password;
         this.identificacion = identificacion;
-        this.latitud = latitud;
-        this.longitud = longitud;
         this.imageUrl = imageUrl;
         this.disponible = disponible;
     }
@@ -64,22 +60,6 @@ public class Usuario {
 
     public void setIdentificacion(int identificacion) {
         this.identificacion = identificacion;
-    }
-
-    public double getLatitud() {
-        return latitud;
-    }
-
-    public void setLatitud(double latitud) {
-        this.latitud = latitud;
-    }
-
-    public double getLongitud() {
-        return longitud;
-    }
-
-    public void setLongitud(double longitud) {
-        this.longitud = longitud;
     }
 
     public String getImageUrl() {
