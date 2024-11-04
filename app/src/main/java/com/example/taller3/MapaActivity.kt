@@ -1,106 +1,178 @@
+// MapaActivity.kt
 package com.example.taller3
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.PolylineOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
 class MapaActivity : AppCompatActivity(), OnMapReadyCallback {
+
     private lateinit var mMap: GoogleMap
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var auth: FirebaseAuth
-    private lateinit var userEmail: String // Email del usuario que se está siguiendo
     private lateinit var database: DatabaseReference
-
-    private val locationUpdateListener = object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            val lat = snapshot.child("location/latitude").getValue(Double::class.java)
-            val lng = snapshot.child("location/longitude").getValue(Double::class.java)
-
-            if (lat != null && lng != null) {
-                Log.d("MapaActivity", "Ubicación obtenida: ($lat, $lng)")
-                // Aquí se añade el marcador y se centra el mapa
-            } else {
-                Log.d("MapaActivity", "Ubicación no encontrada en la base de datos")
-            }
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            Log.e("MapaActivity", "Error al cargar ubicación: ${error.message}")
-        }
-    }
+    private lateinit var auth: FirebaseAuth
+    private var userEmail: String? = null
+    private lateinit var distanceTextView: TextView
+    private var currentUserLocation: LatLng? = null
+    private var targetUserLocation: LatLng? = null
+    private var currentUserMarker: Marker? = null
+    private var targetMarker: Marker? = null
+    private var polyline: Polyline? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mapa)
 
-        // Obtener el ID del usuario que se está siguiendo desde el intent
-        userEmail = intent.getStringExtra("USER_EMAIL") ?: ""
         auth = FirebaseAuth.getInstance()
+        userEmail = intent.getStringExtra("USER_EMAIL")
 
-        // Formatear el correo para usarlo como clave en Firebase
-        val formattedEmail = formatEmailForFirebase(userEmail)
-        database = FirebaseDatabase.getInstance().reference.child("usuarios").child(formattedEmail)
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // Configurar el mapa
+        // Configura el fragmento del mapa
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-    }
 
-    private fun formatEmailForFirebase(email: String): String {
-        return email.replace(".", ",") // Cambia el punto por una coma
+        // Inicializa la referencia a la base de datos
+        database = FirebaseDatabase.getInstance().getReference("usuarios")
+
+        // Referencia al TextView donde se mostrará la distancia
+        distanceTextView = findViewById(R.id.distanceTextView)
+
+        // Escuchar cambios de ubicación en tiempo real
+        escucharCambiosEnUbicacionUsuarioActual()
+        if (userEmail != null) {
+            escucharCambiosEnUbicacionUsuario(userEmail!!)
+        } else {
+            Toast.makeText(this, "No se encontró el email del usuario a seguir", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+    }
 
-        // Verificar permisos de ubicación
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+    private fun escucharCambiosEnUbicacionUsuarioActual() {
+        val currentUserEmail = auth.currentUser?.email
+
+        if (currentUserEmail != null) {
+            database.orderByChild("email").equalTo(currentUserEmail)
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (snapshot.exists()) {
+                            val usuarioSnapshot = snapshot.children.first()
+                            val latitud = usuarioSnapshot.child("location").child("latitude").getValue(Double::class.java)
+                            val longitud = usuarioSnapshot.child("location").child("longitude").getValue(Double::class.java)
+
+                            if (latitud != null && longitud != null) {
+                                val newLocation = LatLng(latitud, longitud)
+                                currentUserLocation = newLocation
+                                actualizarUbicacionActualEnMapa(newLocation)
+                                recalcularDistanciaYLinea()
+                            }
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e("MapaActivity", "Error al obtener ubicación del usuario actual: ${error.message}")
+                    }
+                })
+        }
+    }
+
+    private fun actualizarUbicacionActualEnMapa(location: LatLng) {
+        if (currentUserMarker == null) {
+            // Crea el marcador si no existe
+            currentUserMarker = mMap.addMarker(
+                MarkerOptions()
+                    .position(location)
+                    .title("Mi ubicación")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+            )
         } else {
-            mMap.isMyLocationEnabled = true
+            // Mueve el marcador a la nueva ubicación
+            currentUserMarker?.position = location
         }
-
-        // Escuchar cambios en la ubicación del usuario
-        database.child("location").addValueEventListener(locationUpdateListener)
     }
 
-    @SuppressLint("MissingPermission")
-    private fun calcularDistancia(lat: Double, lng: Double) {
-        // Obtener la ubicación del usuario que está haciendo el seguimiento
-        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-            location?.let {
-                val currentLocation = LatLng(it.latitude, it.longitude)
-                val userLocation = LatLng(lat, lng)
-                val distance = FloatArray(1)
-                Location.distanceBetween(currentLocation.latitude, currentLocation.longitude, lat, lng, distance)
-                // Mostrar la distancia en línea recta
-                Log.d("MapaActivity", "Distancia: ${distance[0]} metros")
-                // Aquí puedes actualizar un TextView o algo similar para mostrar la distancia
+    private fun escucharCambiosEnUbicacionUsuario(email: String) {
+        database.orderByChild("email").equalTo(email)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        val usuarioSnapshot = snapshot.children.first()
+                        val latitud = usuarioSnapshot.child("location").child("latitude").getValue(Double::class.java)
+                        val longitud = usuarioSnapshot.child("location").child("longitude").getValue(Double::class.java)
+
+                        if (latitud != null && longitud != null) {
+                            val targetLocation = LatLng(latitud, longitud)
+                            targetUserLocation = targetLocation
+                            actualizarUbicacionUsuarioEnMapa(targetLocation)
+                            recalcularDistanciaYLinea()
+                        }
+                    } else {
+                        Toast.makeText(this@MapaActivity, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("MapaActivity", "Error al obtener ubicación: ${error.message}")
+                }
+            })
+    }
+
+    private fun actualizarUbicacionUsuarioEnMapa(location: LatLng) {
+        if (targetMarker == null) {
+            // Crea el marcador si no existe
+            targetMarker = mMap.addMarker(
+                MarkerOptions()
+                    .position(location)
+                    .title("Ubicación de ${userEmail}")
+            )
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+        } else {
+            // Mueve el marcador a la nueva ubicación
+            targetMarker?.position = location
+        }
+    }
+
+    private fun recalcularDistanciaYLinea() {
+        if (currentUserLocation != null && targetUserLocation != null) {
+            val currentUserLoc = Location("currentUser").apply {
+                latitude = currentUserLocation!!.latitude
+                longitude = currentUserLocation!!.longitude
             }
-        }
-    }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        database.child("location").removeEventListener(locationUpdateListener)
+            val targetLoc = Location("targetUser").apply {
+                latitude = targetUserLocation!!.latitude
+                longitude = targetUserLocation!!.longitude
+            }
+
+            // Calcula la distancia
+            val distancia = currentUserLoc.distanceTo(targetLoc)
+            distanceTextView.text = "Distancia: ${"%.2f".format(distancia / 1000)} km"
+
+            // Actualiza la línea entre el usuario actual y el usuario seguido
+            polyline?.remove()
+            polyline = mMap.addPolyline(
+                PolylineOptions()
+                    .add(currentUserLocation)
+                    .add(targetUserLocation)
+                    .width(5f)
+                    .color(android.graphics.Color.BLUE)
+            )
+        }
     }
 }
