@@ -57,7 +57,6 @@ class Principal : AppCompatActivity(), OnMapReadyCallback {
         supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
         auth = FirebaseAuth.getInstance()
-        // loadUsers()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -230,25 +229,6 @@ class Principal : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun loadUsers() {
-        val database = Firebase.database
-        val myRef = database.getReference(PATH_USERS)
-        myRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                for (singleSnapshot in dataSnapshot.children) {
-                    val usuario = singleSnapshot.getValue(Usuario::class.java)
-                    Log.i(TAG, "Encontró usuario: " + usuario?.nombre)
-                    val nombre = usuario?.nombre
-                    val correo = usuario?.email
-                    Toast.makeText(baseContext, "$nombre: $correo", Toast.LENGTH_SHORT).show()
-                }
-            }
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.w(TAG, "Error en la consulta", databaseError.toException())
-            }
-        })
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.menu, menu)
@@ -283,7 +263,7 @@ class Principal : AppCompatActivity(), OnMapReadyCallback {
                 true
             }
             R.id.menuOtrosUsuarios -> {
-                val intent = Intent(this, VerUsuarios::class.java)
+                val intent = Intent(this, VerUsers::class.java)
                 startActivity(intent)
                 true
             }

@@ -58,6 +58,9 @@ dependencies {
     implementation(libs.gms.play.services.maps)
     implementation(libs.gms.play.services.location)
     implementation (libs.gson)
+    implementation (libs.glide)
+    annotationProcessor (libs.compiler)
+    implementation(libs.picasso)
 
 
     testImplementation(libs.junit)
