@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menuCerrarSesion"
+        android:title="Cerrar Sesión"
+        android:fontFamily="@font/poppins_bold"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/menuMiMapa"
+        android:title="Mi Mapa"
+        android:fontFamily="@font/poppins_bold"/>
+
+</menu>

@@ -60,6 +60,12 @@ class UserStatusService : Service() {
         })
     }
 
+    private fun stopLocationService() {
+        val serviceIntent = Intent(this, LocationService::class.java)
+        stopService(serviceIntent)
+    }
+
+
     override fun onBind(intent: Intent?): IBinder? {
         // No se utiliza en este caso
         return null
