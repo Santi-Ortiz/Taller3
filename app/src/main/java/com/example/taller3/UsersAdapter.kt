@@ -65,7 +65,7 @@ class UsersAdapter(
                         imageView.setImageResource(R.drawable.fotoperfil)
                     }
             }
-            // Si ya es una URL completa (comienza con http:// o https://)
+            // Si ya es una URL completa
             imageUrl?.startsWith("http") == true -> {
                 cargarImagenConGlide(imageUrl, imageView)
                 Log.d("UsersAdapter", "Cargando URL directa: $imageUrl")

@@ -47,9 +47,7 @@ class UserStatusService : Service() {
                 }
             }
 
-            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-                // Este método no se utiliza en este caso
-            }
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) { }
 
             override fun onCancelled(error: DatabaseError) {
                 Log.e("UserStatusService", "Error al escuchar cambios: ${error.message}")
@@ -64,7 +62,6 @@ class UserStatusService : Service() {
 
 
     override fun onBind(intent: Intent?): IBinder? {
-        // No se utiliza en este caso
         return null
     }
 
