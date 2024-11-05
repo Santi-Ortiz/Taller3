@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -34,6 +36,13 @@ class Principal : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var auth: FirebaseAuth
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateLocationRunnable = object : Runnable {
+        override fun run() {
+            getCurrentLocation()
+            handler.postDelayed(this, 12000) // Ejecutar cada 12 segundos
+        }
+    }
 
     companion object {
         const val PATH_USERS = "usuarios/"
@@ -59,6 +68,7 @@ class Principal : AppCompatActivity(), OnMapReadyCallback {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
         } else {
             startLocationService()
+            handler.post(updateLocationRunnable)
         }
     }
 
