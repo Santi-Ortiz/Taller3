@@ -11,6 +11,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.request.RequestOptions
 import com.google.firebase.storage.FirebaseStorage
 
@@ -25,6 +26,7 @@ class UsersAdapter(
         .diskCacheStrategy(DiskCacheStrategy.ALL)
         .placeholder(R.drawable.fotoperfil)
         .error(R.drawable.fotoperfil)
+        .transform(CircleCrop()) // Aplicar transformación circular
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view = convertView ?: LayoutInflater.from(context)
